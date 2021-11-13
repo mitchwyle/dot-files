@@ -11,7 +11,7 @@ export EDITOR=vi
 export VISUAL=vi
 ```
 
-### No password sudo: add to the *bottom* of /etc/sudoers
+### No password sudo: add to the **bottom** of /etc/sudoers
 
 ```bash
 $ sudo su - root
@@ -43,3 +43,17 @@ $ sudo su - root
 1 1 * * * ( apt-get update -y >& /dev/null && apt-get upgrade -y >& /dev/null )
 ^D
 # crontab .crontab
+
+## Set up code editing in vim with syntastic (and pathogen)
+
+```bash
+$ mkdir -p ~/.vim/autoload ~/.vim/bundle && curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
+$ cat >> ~/.vimrc
+execute pathogen#infect()
+^D
+
+$ cd ~/.vim/bundle && git clone --depth=1 https://github.com/vim-syntastic/sytastic.git
+$ vim
+:Helptags
+
+
