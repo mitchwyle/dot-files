@@ -3,7 +3,7 @@
 # Master script to set up dot files on new Linux virtual machine
 
 #
-DBUG=true  # we are still developing this script :-]
+DBUG=true  # for script development :-]
 #
 
 # If we are not running under bash, try to exec bash with all parameters
@@ -12,21 +12,11 @@ if [ ! "$BASH_VERSION" ] ; then
 fi
 
 #
-# Some helper functions:
+# Load some helper functions:
 #
-log() {
-  printf '%(%F %T)T : ' -1
-  echo "$*"
-}
-
-die() {
-  log "$*"
-  exit 3
-}
-
+. ./utils.sh
 
 # Determine if this script has already run and exit if we have.
-
 # $DBUG && echo "$(grep -i -c SetUpDotFilesHasRun ~/.bashrc)"  ; exit 0
 
 case "$(grep -i -c SetUpDotFilesHasRun ~/.bashrc)" in
