@@ -55,5 +55,12 @@ execute pathogen#infect()
 $ cd ~/.vim/bundle && git clone --depth=1 https://github.com/vim-syntastic/sytastic.git
 $ vim
 :Helptags
+```
+
+## Oh My Bash
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)"
+```
 
 
