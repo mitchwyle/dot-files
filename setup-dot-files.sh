@@ -6,24 +6,21 @@
 DBUG=true  # for script development :-]
 #
 
-# If we are not running under bash, try to exec bash with all parameters
-if [ ! "$BASH_VERSION" ] ; then
-  exec /usr/bin/env bash "$0" "$@"
-fi
-
 #
 # Load some helper functions:
 #
 . ./utils.sh
 
+HaveWeRun() {
 # Determine if this script has already run and exit if we have.
 # $DBUG && echo "$(grep -i -c SetUpDotFilesHasRun ~/.bashrc)"  ; exit 0
-
-case "$(grep -i -c SetUpDotFilesHasRun ~/.bashrc)" in
- "0") # it appears we have not yet run 
-    SetUpDotFilesHasRun=0 ;;
- *) die "SetUpDotFilesHasRun appears in ~/.bashrc, exiting" ;;
-esac
+  BASHRC=${BASHRC-"~/.bashrc"}
+  case "$(grep -i -c SetUpDotFilesHasRun $BASHRC)" in
+   "0") # it appears we have not yet run 
+      SetUpDotFilesHasRun=0 ;;
+   *) die "SetUpDotFilesHasRun appears in ~/.bashrc, exiting" ;;
+  esac
+}
 
 # Configuration Variables
 #
@@ -32,27 +29,33 @@ MyGitEmail="mfw@wyle.org"
 
 
 # Boostrap editor preference and set up passwordles sudo:
-SetEditorAndSudo() {
+SetEditorForSudo() {
 #
-  touch ~/.bashrc
-  cat >> ~/.bashrc  <<'EOF'
+# BASHRC test value is pre-set by testing framework; real value is $USER's .bashrc
+  BASHRC=${BASHRC-"~/.bashrc"} 
+  touch $BASHRC
+  cat >> $BASHRC  <<'EOF'
 export EDITOR=vi
 export VISUAL=vi
 EOF
-  . ~/.bashrc
-  
-  # This first sudo command will require a password
-  set -x  # show the person what each command is doing / trying to do
-  sudo touch ~root/.bashrc
-  sudo cat >> ~root/.bashrc <<'EOF'
-export EDITOR=vi
-export VISUAL=vi
-EOF
-  
-  echo '$USER ALL=(ALL:ALL) ALL' | sudo EDITOR='tee -a' visudo
-  echo '$USER ALL NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo
-  set +x
-}  
+  . $BASHRC
+# # More importantly, set these variables for root so that visudo and other commands do not use emacs
+# #  ROOTBASHRC=${ROOTBASHRC-"~root/.bashrc"}
+# #  sudo touch $ROOTBASHRC # This first sudo command will require a password
+# #  sudo cat >> $ROOTBASHRC <<'EOF'
+# # export EDITOR=vi
+# # export VISUAL=vi
+# # EOF
+#   
+
+}
+
+
+# Enable $USER to sudo without a password
+NoPasswdSudo() {
+  echo "$USER ALL=(ALL:ALL) ALL" | sudo EDITOR='tee -a' visudo
+  echo "$USER ALL NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
+}
 
 # Install git on ubuntu
 
@@ -67,5 +70,21 @@ InstallGitAndGithub() {
 
   echo ""
   echo "Select that RSA key, copy to the clipboard, web in to github, and add to your keys."
+}
+
+# Install Oh My Bash and use the rana theme
+
+InstallOhMyBash() {
+  pushd .
+  cd ~/
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)"
+  ed ~/.bashrc << 'EOF'
+/OSH_THEME=
+.t.
+s/=.*$/rana
+w
+q
+EOF
+  popd
 }
 
