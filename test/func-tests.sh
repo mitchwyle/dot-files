@@ -3,7 +3,7 @@
 # Test functions in setup-dot-files.sh
 
 #. setup-dot-files.sh # load up the functions to test
-. wuh.sh
+. setup-dot-files.sh
   DBUG="true"
 
 @test "Happy path of bashrc for SetEditorAndSudo" { 
