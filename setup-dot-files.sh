@@ -55,7 +55,7 @@ EOF
 NoPasswdSudo() {
   VISUDOCMD=${VISUDOCMD-"visudo"} # test value set by tests; real value is visudo
   echo "$USER ALL=(ALL:ALL) ALL" | sudo EDITOR='tee -a' $VISUDOCMD
-  echo "$USER ALL NOPASSWD: ALL" | sudo EDITOR='tee -a' $VISUDOCMD
+  echo "$USER ALL=NOPASSWD: ALL" | sudo EDITOR='tee -a' $VISUDOCMD
 }
 
 # Install git on ubuntu
