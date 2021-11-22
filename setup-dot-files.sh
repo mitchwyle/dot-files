@@ -53,9 +53,9 @@ EOF
 
 # Enable $USER to sudo without a password
 NoPasswdSudo() {
-  VISUDOCMD=${VISUDOCMD-"visudo"} # test value set by tests; real value is visudo
-  echo "$USER ALL=(ALL:ALL) ALL" | sudo EDITOR='tee -a' $VISUDOCMD
-  echo "$USER ALL=NOPASSWD: ALL" | sudo EDITOR='tee -a' $VISUDOCMD
+  SUDOCMD=${SUDOCMD-"sudo EDITOR='tee -a' visudo"}     # test value for sudo set by tests; real value is sudo
+  echo "$USER ALL=(ALL:ALL) ALL" | $SUDOCMD
+  echo "$USER ALL=NOPASSWD: ALL" | $SUDOCMD
 }
 
 # Install git on ubuntu

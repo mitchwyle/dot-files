@@ -4,15 +4,20 @@
 
 #. setup-dot-files.sh # load up the functions to test
 . setup-dot-files.sh
-  DBUG="true"
 
 @test "Happy path of bashrc for SetEditorAndSudo" { 
       BASHRC="/tmp/test-bashrc_$$"      # test file name for ~/.bashrc
   ROOTBASHRC="/tmp/root-test-bashrc_$$" # test file name for ~root/.bashrc
   wuh="$(SetEditorForSudo)"
-  $DBUG && echo "$BASHRC contains" ; cat $BASHRC ; echo ""
   [[ $(grep -Fx "EDITOR=vi" "$BASHRC" >/dev/null; echo $?) ]]
+  /bin/rm -f $BASHRC $ROOTBASHRC
 }
 
-/bin/rm -f $BASHRC $ROOTBASHRC
+@test "Happy path of adding $USER to sudo without a password" {
+  TMPTESTFILE="/tmp/TestNoPasswdSudo_$$"
+  SUDOCMD="tee $TMPTESTFILE"
+  wuh="$(NoPasswdSudo)"
+  [[ $(grep -Fx "$USER ALL=NOPASSWD" $TMPTESTFILE >/dev/null; echo $?) ]]
+  /bin/rm -f $TMPTESTFILE
+}
 
