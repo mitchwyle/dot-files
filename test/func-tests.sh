@@ -21,10 +21,10 @@
   /bin/rm -f $TMPTESTFILE
 }
 
-@test  "Test what happens if $USER is undefined or has no account when adding to sudoers" {
+@test "what happens if \$USER has no account when adding to sudoers" {
   TSTUSR="$USER"
   USER="thisUserDoesNotExist"
-  wuh="$(NoPasswdSudo)"
-  [[ echo $? ]]
+  [[ wuh="$(NoPasswdSudo >&/dev/null ; echo $?)" ]]
+  USR=$TSTUSR  # set USER back to original value
 }
-
+ 

@@ -57,7 +57,7 @@ EOF
 # Enable $USER to sudo without a password
 NoPasswdSudo() {
   $(id $USER>&/dev/null) || die "The account $USER does not exist."
-  SUDOCMD=${SUDOCMD-"sudo EDITOR='tee -a' visudo"}     # test value for sudo set by tests; real value is sudo
+  SUDOCMD=${SUDOCMD-"sudo EDITOR='tee -a' visudo"}     # inject sudo command dependency
   echo "$USER ALL=(ALL:ALL) ALL" | $SUDOCMD
   echo "$USER ALL=NOPASSWD: ALL" | $SUDOCMD
 }
