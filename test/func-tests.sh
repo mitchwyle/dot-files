@@ -28,3 +28,7 @@
   USR=$TSTUSR  # set USER back to original value
 }
  
+@test "Happy path test of installing git and github" {
+
+}
+

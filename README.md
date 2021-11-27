@@ -14,11 +14,11 @@ export VISUAL=vi
 ### No password sudo: add to the **bottom** of /etc/sudoers
 
 ```bash
-$ sudo su - root
-$ visudo
+$(id $USER>&/dev/null) || echo "The account $USER does not exist."
+SUDOCMD=${SUDOCMD-"sudo EDITOR='tee -a' visudo"}
+echo "$USER ALL=(ALL:ALL) ALL" | $SUDOCMD
+echo "$USER ALL=NOPASSWD: ALL" | $SUDOCMD
 
-mitch ALL=(ALL:ALL) ALL
-mitch ALL NOPASSWD: ALL
 ```
 
 ## Install git
