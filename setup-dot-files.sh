@@ -65,16 +65,30 @@ NoPasswdSudo() {
 # Install git on ubuntu
 
 InstallGitAndGithub() {
-  apt-get install git-all
+# Verify variables are set (MyGitUsername, MyGitEmail)
+  [ -z "$MyGitUsername" ] || die "The variable MyGitUsername is not set."
+  [ -z "$MyGitEmail" ]    || die "The variable MyGitEmail is not set."
+
+  echo "Installing git commands and their dependencies. . ."
+  sudo apt-get install git-all || die "sudo apt-get install git-all failed"
   git config --global user.name "$MyGitUserName"
   git config --global user.email "$MyGitEmail"
   git config --global color.ui true
   git config --global core.editor vi
-  ssh-keygen -t rsa -C "MyGitEmail"
+  ssh-keygen -t rsa -C "$MyGitEmail"
+  echo "Here is the text of your new ssh key for github:"
+  echo ""
   cat ~/.ssh/id_rsa.pub
 
-  echo ""
-  echo "Select the above text -- your new RSA key, copy the text to the clipboard, web in to github, and add to your key."
+  echo << 'EOF'
+
+Select the above text -- your new RSA ssh key -- and copy the text to your clipboard.
+Web in to:  https://github.com/settings/keys/new 
+Enter a Title for your new key.
+Paste the text of your new key into the "Key" text box
+Click the "Add SSH key" button and your git / github setup will be complete.
+
+EOF
 }
 
 # Install Oh My Bash and use the rana theme
