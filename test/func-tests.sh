@@ -21,7 +21,7 @@
   /bin/rm -f $TMPTESTFILE
 }
 
-@test "what happens if \$USER has no account when adding to sudoers" {
+@test "What happens if \$USER has no account when adding to sudoers" {
   TSTUSR="$USER"
   USER="thisUserDoesNotExist"
   [[ wuh="$(NoPasswdSudo >&/dev/null ; echo $?)" ]]
@@ -29,6 +29,10 @@
 }
  
 @test "Happy path test of installing git and github" {
+  SshKeyFileName="/tmp/test-ssh-key-gen-$$"
+  wuh="$(InstallGitAndGithub >& /dev/null)"
+  [[ $(grep -q ssh-rsa "$SshKeyFileName"* ; echo $?) ]]
+  /bin/rm -f "$SshKeyFileName".*
 
 }
 
