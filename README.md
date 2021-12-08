@@ -43,18 +43,19 @@ $ sudo su - root
 1 1 * * * ( apt-get update -y >& /dev/null && apt-get upgrade -y >& /dev/null )
 ^D
 # crontab .crontab
+```
 
 ## Set up code editing in vim with syntastic (and pathogen)
 
 ```bash
-$ mkdir -p ~/.vim/autoload ~/.vim/bundle && curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
-$ cat >> ~/.vimrc
-execute pathogen#infect()
-^D
 
-$ cd ~/.vim/bundle && git clone --depth=1 https://github.com/vim-syntastic/sytastic.git
-$ vim
-:Helptags
+$ mkdir -p ~/.vim/autoload ~/.vim/bundle 
+$ curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
+$ cat >> ~/.vimrc
+$ execute pathogen#infect()
+$ cd ~/.vim/bundle
+$ git clone --depth=1 ssh://github.com/vim-syntastic/syntastic.git
+
 ```
 
 ## Oh My Bash
