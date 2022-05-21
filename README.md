@@ -54,7 +54,7 @@ $ curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 $ cat >> ~/.vimrc
 $ execute pathogen#infect()
 $ cd ~/.vim/bundle
-$ git clone --depth=1 ssh://github.com/vim-syntastic/syntastic.git
+$ git clone --depth=1 git@github.com:mitchwyle/dot-files.git
 
 ```
 
