@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# summarize -- pipe a whisper.cpp transcript through Gemini 2.5 Flash
+# Usage: summarize <transcript.txt>
+# Requires: GEMINI_API_KEY in environment, wget, jq
+
+set -euo pipefail
+
+GEMINI_MODEL="gemini-2.5-flash"
+PAYLOAD_TMP=""
+
+trap '[[ -n "$PAYLOAD_TMP" && -f "$PAYLOAD_TMP" ]] && rm -f "$PAYLOAD_TMP"' EXIT
+
+# ── guards ────────────────────────────────────────────────────────────────────
+
+if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+  echo "ERROR: GEMINI_API_KEY is not set." >&2
+  exit 1
+fi
+
+for cmd in wget jq; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo "ERROR: Required command not found on PATH: $cmd" >&2
+    exit 1
+  fi
+done
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: summarize <transcript.txt>" >&2
+  exit 1
+fi
+
+TRANSCRIPT_FILE="$1"
+
+if [[ ! -f "$TRANSCRIPT_FILE" ]]; then
+  echo "ERROR: File not found: $TRANSCRIPT_FILE" >&2
+  exit 1
+fi
+
+TRANSCRIPT_BYTES=$(wc -c < "$TRANSCRIPT_FILE")
+
+if [[ "$TRANSCRIPT_BYTES" -eq 0 ]]; then
+  echo "ERROR: Transcript file is empty: $TRANSCRIPT_FILE" >&2
+  exit 1
+fi
+
+MAX_BYTES=$((1 * 1024 * 1024))  # 1 MB; Gemini Flash context limit is far higher
+if [[ "$TRANSCRIPT_BYTES" -gt "$MAX_BYTES" ]]; then
+  echo "ERROR: Transcript exceeds 1 MB ($TRANSCRIPT_BYTES bytes). Split the file before summarizing." >&2
+  exit 1
+fi
+
+GEMINI_URL="https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}"
+
+# ── prompt ────────────────────────────────────────────────────────────────────
+
+SYSTEM_PROMPT=$(cat <<'PROMPT'
+You are an expert meeting summarizer. Given a raw transcript, produce a structured
+Markdown summary with the following sections:
+— Executive Summary: 3–7 ultra‑terse bullet points capturing the most-important information for an executive audience
+— Action Items: Each item has assignee, task assigned with measurement for completion, and due date
+— Decisions Made: clear decisions
+— Milestone Dates & Deadlines: critical dates mentioned
+— Notable Information Shared: concise bullets of key updates and facts
+
+Include a one-sentence summary of the mood, feelings, or other important meta-information that occurred in the meeting.
+
+Rules:
+- Extremely terse
+- Use only information present in the transcript; do not infer or hallucinate.
+- If a section has no content, write "None identified."
+- Do not include filler, preamble, or closing pleasantries.
+PROMPT
+)
+
+# ── build output path ─────────────────────────────────────────────────────────
+
+BASE="${TRANSCRIPT_FILE%.*}"
+OUTPUT_FILE="${BASE}.summary.md"
+
+# ── build JSON payload via temp file ─────────────────────────────────────────
+# --rawfile reads the transcript directly from disk into the jq variable so
+# the content never passes through jq's argument list, avoiding argument
+# length limits regardless of transcript size.
+
+PAYLOAD_TMP=$(mktemp --suffix=.json)
+
+jq -n \
+  --arg     system     "$SYSTEM_PROMPT" \
+  --rawfile transcript "$TRANSCRIPT_FILE" \
+  '{
+    "system_instruction": {
+      "parts": [{"text": $system}]
+    },
+    "contents": [
+      {
+        "role": "user",
+        "parts": [{"text": $transcript}]
+      }
+    ],
+    "generationConfig": {
+      "temperature": 0.2,
+      "maxOutputTokens": 2048
+    }
+  }' > "$PAYLOAD_TMP"
+
+# ── call API ──────────────────────────────────────────────────────────────────
+
+RESPONSE=$(wget -q -O - \
+  --header="Content-Type: application/json" \
+  --post-file="$PAYLOAD_TMP" \
+  "$GEMINI_URL")
+
+# ── extract text ──────────────────────────────────────────────────────────────
+
+SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+
+if [[ -z "$SUMMARY" ]]; then
+  echo "ERROR: No text in API response. Raw response:" >&2
+  echo "$RESPONSE" >&2
+  exit 1
+fi
+
+# ── write output ──────────────────────────────────────────────────────────────
+
+{
+  echo "# Meeting Summary"
+  echo ""
+  echo "_Source: \`$(basename "$TRANSCRIPT_FILE")\`_"
+  echo "_Generated: $(date '+%Y-%m-%d %H:%M %Z')_"
+  echo ""
+  echo "$SUMMARY"
+} > "$OUTPUT_FILE"
+
+echo "Summary written to: $OUTPUT_FILE"

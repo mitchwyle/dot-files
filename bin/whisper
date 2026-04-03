@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+exec ~/src/whisper.cpp/build/bin/whisper-cli \
+  -m ~/src/whisper.cpp/models/ggml-base.en.bin \
+  "$@"

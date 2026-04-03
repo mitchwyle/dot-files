@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# meetingnotes -- transcribe an mp4 and summarize the transcript in one step
+# Usage: meetingnotes <videofile> [outputbase]
+# Requires: transcribe and summarize on PATH, GEMINI_API_KEY in environment
+
+set -euo pipefail
+
+exec </dev/null >/tmp/meetingnotes_$$_.log 2>&1
+
+if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+  echo "ERROR: GEMINI_API_KEY is not set." >&2
+  exit 1
+fi
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: meetingnotes <videofile> [outputbase]" >&2
+  exit 1
+fi
+
+INPUT="$1"
+BASE="${2:-${INPUT%.*}}"
+TRANSCRIPT="${BASE}.txt"
+
+if [[ ! -f "$INPUT" ]]; then
+  echo "ERROR: File not found: $INPUT" >&2
+  exit 1
+fi
+
+echo "==> Transcribing: $INPUT"
+transcribe "$INPUT" "$BASE"
+
+if [[ ! -f "$TRANSCRIPT" ]]; then
+  echo "ERROR: transcribe did not produce expected file: $TRANSCRIPT" >&2
+  exit 1
+fi
+
+echo "==> Summarizing: $TRANSCRIPT"
+summarize "$TRANSCRIPT"

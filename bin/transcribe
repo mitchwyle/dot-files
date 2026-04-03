@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -x
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: transcribe <videofile> [outputbase]" >&2
+    exit 1
+fi
+
+INPUT="$1"
+BASE="${2:-${INPUT%.*}}"
+WAV=$(mktemp --suffix=.wav)
+
+trap 'rm -f "$WAV"' EXIT
+
+ffmpeg -nostdin -loglevel error -y -i "$INPUT" \
+    -ar 16000 \
+    -ac 1 \
+    -c:a pcm_s16le \
+    -vn \
+    "$WAV"
+
+whisper -m ~/src/whisper.cpp/models/ggml-small.en.bin \
+    -f "$WAV" \
+    -of "$BASE" \
+    --output-txt

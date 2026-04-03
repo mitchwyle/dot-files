@@ -64,4 +64,4 @@ $ git clone --depth=1 git@github.com:mitchwyle/dot-files.git
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)"
 ```
 
-
+# Adding a bin directory for bash scripts I want in my path that will link to git controlled versions here.

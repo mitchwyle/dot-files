@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat >&2 <<EOF
+Usage: video-transcript <videofile> [outputfile]
+
+Transcribe a video file to text.
+
+Arguments:
+    videofile   Input video file (any format ffmpeg supports)
+    outputfile  Output transcript file (default: <videofile>.txt)
+
+Examples:
+    video-transcript recording.mp4
+    video-transcript meeting.mkv notes.txt
+EOF
+    exit 1
+}
+
+if [[ $# -lt 1 ]]; then
+    usage
+fi
+
+INPUT="$1"
+if [[ ! -f "$INPUT" ]]; then
+    echo "Error: File not found: $INPUT" >&2
+    exit 1
+fi
+
+# Determine output filename
+if [[ $# -ge 2 ]]; then
+    OUTPUT="$2"
+else
+    OUTPUT="${INPUT%.*}.txt"
+fi
+
+# Create temp directory for intermediate files
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+WAV="$TMPDIR/audio.wav"
+TRANSCRIPT_BASE="$TMPDIR/transcript"
+
+echo "Extracting audio from $INPUT..."
+ffmpeg -y -i "$INPUT" \
+    -ar 16000 \
+    -ac 1 \
+    -c:a pcm_s16le \
+    -vn \
+    -loglevel warning \
+    "$WAV"
+
+echo "Transcribing audio..."
+whisper -m ~/src/whisper.cpp/models/ggml-small.en.bin \
+    -f "$WAV" \
+    -of "$TRANSCRIPT_BASE" \
+    --output-txt \
+    2>/dev/null
+
+# Move the transcript to the final destination
+if [[ -f "${TRANSCRIPT_BASE}.txt" ]]; then
+    mv "${TRANSCRIPT_BASE}.txt" "$OUTPUT"
+    echo "Transcript saved to: $OUTPUT"
+else
+    echo "Error: Transcription failed" >&2
+    exit 1
+fi
